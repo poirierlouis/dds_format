@@ -48,12 +48,22 @@ enum DdsResourceType {
 /// Parses the DDS header and indexes all surface byte offsets on construction
 /// without copying pixel data.
 final class DdsReader {
+  final Uint8List _bytes;
+  final DdsHeader _header;
+  late final List<int> _mipStartSlice;
+  late final List<int> _mipSliceSizes;
+  late final int _slicesPerFace;
+  late final List<int> _surfaceOffsets;
+  late final List<int> _surfaceLengths;
+
   /// Parses a DDS file from [bytes] and indexes all declared surfaces.
   ///
   /// Throws [DdsFormatException] if the header is invalid, uses an unsupported
   /// format, or if [bytes] is truncated before the end of the declared surface
   /// data.
-  DdsReader(Uint8List bytes) : _bytes = bytes, _header = DdsHeader.parse(bytes) {
+  DdsReader(Uint8List bytes)
+    : _bytes = bytes,
+      _header = DdsHeader.parse(bytes) {
     final mipCount = _header.mipCount;
     _mipStartSlice = List<int>.filled(mipCount, 0);
     _mipSliceSizes = List<int>.filled(mipCount, 0);
@@ -98,14 +108,6 @@ final class DdsReader {
       );
     }
   }
-
-  final Uint8List _bytes;
-  final DdsHeader _header;
-  late final List<int> _mipStartSlice;
-  late final List<int> _mipSliceSizes;
-  late final int _slicesPerFace;
-  late final List<int> _surfaceOffsets;
-  late final List<int> _surfaceLengths;
 
   /// Base texture width in pixels (mip level 0).
   int get width => _header.width;

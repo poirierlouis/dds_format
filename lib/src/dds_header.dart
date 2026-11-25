@@ -1,7 +1,99 @@
+import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:dds_format/src/dds_reader.dart';
 import 'package:dds_format/src/dds_texture_format.dart';
+
+final class _DdsPixelFormat extends Struct {
+  @Uint32()
+  external int dwSize;
+
+  @Uint32()
+  external int dwFlags;
+
+  @Uint32()
+  external int dwFourCC;
+
+  @Uint32()
+  external int dwRGBBitCount;
+
+  @Uint32()
+  external int dwRBitMask;
+
+  @Uint32()
+  external int dwGBitMask;
+
+  @Uint32()
+  external int dwBBitMask;
+
+  @Uint32()
+  external int dwABitMask;
+}
+
+final class _DdsHeader extends Struct {
+  @Uint32()
+  external int dwSize;
+
+  @Uint32()
+  external int dwFlags;
+
+  @Uint32()
+  external int dwHeight;
+
+  @Uint32()
+  external int dwWidth;
+
+  @Uint32()
+  external int dwPitchOrLinearSize;
+
+  @Uint32()
+  external int dwDepth;
+
+  @Uint32()
+  external int dwMipMapCount;
+
+  @Array(11)
+  external Array<Uint32> dwReserved1;
+
+  external _DdsPixelFormat ddspf;
+
+  @Uint32()
+  external int dwCaps;
+
+  @Uint32()
+  external int dwCaps2;
+
+  @Uint32()
+  external int dwCaps3;
+
+  @Uint32()
+  external int dwCaps4;
+
+  @Uint32()
+  external int dwReserved2;
+}
+
+final class _DdsHeaderDxt10 extends Struct {
+  @Uint32()
+  external int dxgiFormat;
+
+  @Uint32()
+  external int resourceDimension;
+
+  @Uint32()
+  external int miscFlag;
+
+  @Uint32()
+  external int arraySize;
+
+  @Uint32()
+  external int miscFlags2;
+}
+
+final class _DdsFilePrefix extends Struct {
+  @Uint32()
+  external int dwMagic;
+}
 
 /// Internal representation of a parsed DDS header (`DDS_HEADER` + optional
 /// `DDS_HEADER_DXT10`).
@@ -78,9 +170,8 @@ final class DdsHeader {
       );
     }
 
-    final view = ByteData.sublistView(bytes);
-
-    final magic = view.getUint32(0, Endian.little);
+    final prefix = Struct.create<_DdsFilePrefix>(bytes, 0);
+    final magic = prefix.dwMagic;
     if (magic != _magic) {
       throw DdsFormatException(
         'Invalid DDS magic number: 0x${magic.toRadixString(16).padLeft(8, '0')}.',
@@ -88,7 +179,8 @@ final class DdsHeader {
       );
     }
 
-    final dwSize = view.getUint32(4, Endian.little);
+    final header = Struct.create<_DdsHeader>(bytes, 4);
+    final dwSize = header.dwSize;
     if (dwSize != _headerSize) {
       throw DdsFormatException(
         'Invalid DDS_HEADER.dwSize: expected $_headerSize, got $dwSize.',
@@ -96,11 +188,11 @@ final class DdsHeader {
       );
     }
 
-    final dwFlags = view.getUint32(8, Endian.little);
-    final dwHeight = view.getUint32(12, Endian.little);
-    final dwWidth = view.getUint32(16, Endian.little);
-    final dwDepth = view.getUint32(24, Endian.little);
-    final dwMipMapCount = view.getUint32(28, Endian.little);
+    final dwFlags = header.dwFlags;
+    final dwHeight = header.dwHeight;
+    final dwWidth = header.dwWidth;
+    final dwDepth = header.dwDepth;
+    final dwMipMapCount = header.dwMipMapCount;
 
     if (dwWidth == 0 || dwHeight == 0) {
       throw DdsFormatException(
@@ -109,8 +201,8 @@ final class DdsHeader {
       );
     }
 
-    // DDS_PIXELFORMAT starts at byte offset 76.
-    final pfSize = view.getUint32(76, Endian.little);
+    final ddspf = header.ddspf;
+    final pfSize = ddspf.dwSize;
     if (pfSize != _pixelFormatSize) {
       throw DdsFormatException(
         'Invalid DDS_PIXELFORMAT.dwSize: expected $_pixelFormatSize, got $pfSize.',
@@ -118,15 +210,15 @@ final class DdsHeader {
       );
     }
 
-    final pfFlags = view.getUint32(80, Endian.little);
-    final pfFourCc = view.getUint32(84, Endian.little);
-    final pfRgbBitCount = view.getUint32(88, Endian.little);
-    final pfRBitMask = view.getUint32(92, Endian.little);
-    final pfGBitMask = view.getUint32(96, Endian.little);
-    final pfBBitMask = view.getUint32(100, Endian.little);
-    final pfABitMask = view.getUint32(104, Endian.little);
+    final pfFlags = ddspf.dwFlags;
+    final pfFourCc = ddspf.dwFourCC;
+    final pfRgbBitCount = ddspf.dwRGBBitCount;
+    final pfRBitMask = ddspf.dwRBitMask;
+    final pfGBitMask = ddspf.dwGBitMask;
+    final pfBBitMask = ddspf.dwBBitMask;
+    final pfABitMask = ddspf.dwABitMask;
 
-    final dwCaps2 = view.getUint32(112, Endian.little);
+    final dwCaps2 = header.dwCaps2;
 
     final hasFourCc = (pfFlags & _ddpfFourCc) != 0;
     final hasDx10 = hasFourCc && pfFourCc == _fourCcDx10;
@@ -142,7 +234,8 @@ final class DdsHeader {
         );
       }
 
-      final dxgiFormatCode = view.getUint32(128, Endian.little);
+      final dx10 = Struct.create<_DdsHeaderDxt10>(bytes, _baseTotalHeaderSize);
+      final dxgiFormatCode = dx10.dxgiFormat;
       final format = DdsTextureFormat.fromDxgiCode(dxgiFormatCode);
       if (format == null) {
         throw DdsFormatException(
@@ -151,9 +244,9 @@ final class DdsHeader {
         );
       }
 
-      final resourceDimension = view.getUint32(132, Endian.little);
-      final miscFlag = view.getUint32(136, Endian.little);
-      final rawArraySize = view.getUint32(140, Endian.little);
+      final resourceDimension = dx10.resourceDimension;
+      final miscFlag = dx10.miscFlag;
+      final rawArraySize = dx10.arraySize;
 
       if (resourceDimension != _d3d10ResourceDimensionTexture1D &&
           resourceDimension != _d3d10ResourceDimensionTexture2D &&
