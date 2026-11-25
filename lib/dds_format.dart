@@ -1,8 +1,7 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
+/// Synchronous DirectDraw Surface (DDS) reader and BCn/uncompressed pixel
+/// decoder.
 library;
 
-export 'src/dds_format_base.dart';
-
-// TODO: Export any libraries intended for clients of this package.
+export 'src/dds_reader.dart'
+    show DdsFormatException, DdsReader, DdsResourceType;
+export 'src/dds_texture_format.dart' show DdsTextureFormat;
