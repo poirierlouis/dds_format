@@ -1,5 +1,5 @@
 name: dds_format
-description: A starting point for Dart libraries or applications.
+description: A Dart library to read DirectDraw Surface format.
 version: 0.1.0
 repository: https://github.com/poirierlouis/dds_format
 
