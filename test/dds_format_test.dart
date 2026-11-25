@@ -385,10 +385,7 @@ void main() {
         dxgiFormat: DdsTextureFormat.r8g8b8a8Unorm.dxgiCode,
         payload: Uint8List.fromList([10, 20, 30, 40]),
       );
-      expect(
-        DdsReader(rgbaDds).readRgba8(),
-        equals([10, 20, 30, 40]),
-      );
+      expect(DdsReader(rgbaDds).readRgba8(), equals([10, 20, 30, 40]));
 
       final bgraDds = _buildDx10Dds(
         width: 1,
@@ -396,10 +393,7 @@ void main() {
         dxgiFormat: DdsTextureFormat.b8g8r8a8Unorm.dxgiCode,
         payload: Uint8List.fromList([30, 20, 10, 40]),
       );
-      expect(
-        DdsReader(bgraDds).readRgba8(),
-        equals([10, 20, 30, 40]),
-      );
+      expect(DdsReader(bgraDds).readRgba8(), equals([10, 20, 30, 40]));
 
       final r8Dds = _buildDx10Dds(
         width: 1,
@@ -407,10 +401,7 @@ void main() {
         dxgiFormat: DdsTextureFormat.r8Unorm.dxgiCode,
         payload: Uint8List.fromList([128]),
       );
-      expect(
-        DdsReader(r8Dds).readRgba8(),
-        equals([128, 0, 0, 255]),
-      );
+      expect(DdsReader(r8Dds).readRgba8(), equals([128, 0, 0, 255]));
 
       final a8Dds = _buildDx10Dds(
         width: 1,
@@ -418,10 +409,7 @@ void main() {
         dxgiFormat: DdsTextureFormat.a8Unorm.dxgiCode,
         payload: Uint8List.fromList([200]),
       );
-      expect(
-        DdsReader(a8Dds).readRgba8(),
-        equals([0, 0, 0, 200]),
-      );
+      expect(DdsReader(a8Dds).readRgba8(), equals([0, 0, 0, 200]));
     });
 
     test('BC1 opaque and 1-bit alpha', () {
@@ -455,10 +443,7 @@ void main() {
         dxgiFormat: DdsTextureFormat.bc1Unorm.dxgiCode,
         payload: alphaBlock,
       );
-      expect(
-        DdsReader(alphaDds).readRgba8(),
-        equals([0, 0, 0, 0]),
-      );
+      expect(DdsReader(alphaDds).readRgba8(), equals([0, 0, 0, 0]));
     });
 
     test('BC3, BC4, BC5, BC6H, BC7 decode to expected RGBA8', () {
@@ -487,8 +472,22 @@ void main() {
 
       // BC5: R=210, G=90 -> (210, 90, 0, 255)
       final bc5Block = Uint8List.fromList([
-        210, 0, 0, 0, 0, 0, 0, 0,
-        90, 0, 0, 0, 0, 0, 0, 0,
+        210,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        90,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
       ]);
       final bc5Dds = _buildDx10Dds(
         width: 1,
@@ -528,10 +527,7 @@ void main() {
       );
 
       final badMagic = Uint8List(128);
-      expect(
-        () => DdsReader(badMagic),
-        throwsA(isA<DdsFormatException>()),
-      );
+      expect(() => DdsReader(badMagic), throwsA(isA<DdsFormatException>()));
 
       final badDwSize = _buildLegacyDds(
         width: 1,
@@ -541,10 +537,7 @@ void main() {
         payload: Uint8List(8),
       );
       ByteData.sublistView(badDwSize).setUint32(4, 100, Endian.little);
-      expect(
-        () => DdsReader(badDwSize),
-        throwsA(isA<DdsFormatException>()),
-      );
+      expect(() => DdsReader(badDwSize), throwsA(isA<DdsFormatException>()));
 
       final badPfSize = _buildLegacyDds(
         width: 1,
@@ -554,10 +547,7 @@ void main() {
         payload: Uint8List(8),
       );
       ByteData.sublistView(badPfSize).setUint32(76, 16, Endian.little);
-      expect(
-        () => DdsReader(badPfSize),
-        throwsA(isA<DdsFormatException>()),
-      );
+      expect(() => DdsReader(badPfSize), throwsA(isA<DdsFormatException>()));
 
       // Missing DX10 header bytes
       final truncatedDx10 = _buildLegacyDds(
@@ -592,10 +582,7 @@ void main() {
         fourCc: _fourCc('DXT3'),
         payload: Uint8List(16),
       );
-      expect(
-        () => DdsReader(dxt3),
-        throwsA(isA<DdsFormatException>()),
-      );
+      expect(() => DdsReader(dxt3), throwsA(isA<DdsFormatException>()));
 
       // Unknown DXGI format
       final unknownDxgi = _buildDx10Dds(
@@ -604,10 +591,7 @@ void main() {
         dxgiFormat: 9999,
         payload: Uint8List(16),
       );
-      expect(
-        () => DdsReader(unknownDxgi),
-        throwsA(isA<DdsFormatException>()),
-      );
+      expect(() => DdsReader(unknownDxgi), throwsA(isA<DdsFormatException>()));
     });
 
     test('throws RangeError on out-of-bounds indices', () {

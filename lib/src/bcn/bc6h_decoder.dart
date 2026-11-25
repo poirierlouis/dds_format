@@ -5,12 +5,7 @@ import 'package:dds_format/src/bcn_decoder.dart';
 
 /// BC6H (UF16 - unsigned half-float) block decoder extension on [BcnDecoder].
 extension Bc6hDecoder on BcnDecoder {
-  void decodeBc6hUf16(
-    Uint8List src,
-    Uint8List dst,
-    int width,
-    int height,
-  ) {
+  void decodeBc6hUf16(Uint8List src, Uint8List dst, int width, int height) {
     final blocksX = (width + 3) >> 2;
     final blocksY = (height + 3) >> 2;
 

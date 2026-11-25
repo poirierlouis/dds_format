@@ -23,7 +23,11 @@ Uint8List _buildSample2x2Rgba8Dds() {
   final view = ByteData.sublistView(bytes);
   view.setUint32(0, 0x20534444, Endian.little); // "DDS "
   view.setUint32(4, 124, Endian.little); // dwSize
-  view.setUint32(8, 0x1007, Endian.little); // CAPS | HEIGHT | WIDTH | PIXELFORMAT
+  view.setUint32(
+    8,
+    0x1007,
+    Endian.little,
+  ); // CAPS | HEIGHT | WIDTH | PIXELFORMAT
   view.setUint32(12, 2, Endian.little); // height
   view.setUint32(16, 2, Endian.little); // width
   view.setUint32(76, 32, Endian.little); // ddspf.dwSize
@@ -37,10 +41,22 @@ Uint8List _buildSample2x2Rgba8Dds() {
 
   // 2x2 RGBA8 pixels (red, green, blue, white)
   bytes.setRange(128, 144, [
-    255, 0, 0, 255,
-    0, 255, 0, 255,
-    0, 0, 255, 255,
-    255, 255, 255, 255,
+    255,
+    0,
+    0,
+    255,
+    0,
+    255,
+    0,
+    255,
+    0,
+    0,
+    255,
+    255,
+    255,
+    255,
+    255,
+    255,
   ]);
   return bytes;
 }

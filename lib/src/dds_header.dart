@@ -258,12 +258,13 @@ final class DdsHeader {
       }
 
       final is3D = resourceDimension == _d3d10ResourceDimensionTexture3D;
-      final isCubemap = !is3D && (miscFlag & _d3d11ResourceMiscTextureCube) != 0;
+      final isCubemap =
+          !is3D && (miscFlag & _d3d11ResourceMiscTextureCube) != 0;
       final resourceType = is3D
           ? DdsResourceType.texture3D
           : (isCubemap
-              ? DdsResourceType.textureCube
-              : DdsResourceType.texture2D);
+                ? DdsResourceType.textureCube
+                : DdsResourceType.texture2D);
       final faceCount = isCubemap ? 6 : 1;
       final depth = is3D ? (dwDepth > 0 ? dwDepth : 1) : 1;
       final arraySize = is3D ? 1 : (rawArraySize > 0 ? rawArraySize : 1);

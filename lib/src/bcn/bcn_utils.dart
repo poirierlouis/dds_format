@@ -1,13 +1,7 @@
 import 'dart:typed_data';
 
 /// Unpacks a 16-bit RGB565 color [c] into [r], [g], [b] at [slot].
-void unpackRgb565(
-  int c,
-  Uint8List r,
-  Uint8List g,
-  Uint8List b,
-  int slot,
-) {
+void unpackRgb565(int c, Uint8List r, Uint8List g, Uint8List b, int slot) {
   final r5 = (c >> 11) & 0x1F;
   final g6 = (c >> 5) & 0x3F;
   final b5 = c & 0x1F;
@@ -47,10 +41,8 @@ void decodeBc4Block(
 
   // 48-bit index stream: two 24-bit halves (8 texels each) to avoid 64-bit
   // shift overflow issues on web/JS if ever compiled there.
-  final lo =
-      src[offset + 2] | (src[offset + 3] << 8) | (src[offset + 4] << 16);
-  final hi =
-      src[offset + 5] | (src[offset + 6] << 8) | (src[offset + 7] << 16);
+  final lo = src[offset + 2] | (src[offset + 3] << 8) | (src[offset + 4] << 16);
+  final hi = src[offset + 5] | (src[offset + 6] << 8) | (src[offset + 7] << 16);
 
   for (int i = 0; i < 8; i++) {
     out16[i] = palette[(lo >> (i * 3)) & 0x7];
@@ -132,14 +124,70 @@ const List<int> bc7Weights4 = [
 
 /// Standard 2-subset anchor indices for 32/64 partitions (BC6H uses first 32).
 const List<int> bc7Anchor2 = [
-  15, 15, 15, 15, 15, 15, 15, 15,
-  15, 15, 15, 15, 15, 15, 15, 15,
-  15, 2, 8, 2, 2, 8, 8, 15,
-  2, 8, 2, 2, 8, 8, 2, 2,
-  15, 15, 6, 8, 2, 8, 15, 15,
-  2, 8, 2, 2, 2, 15, 15, 6,
-  6, 2, 6, 8, 15, 15, 2, 2,
-  15, 15, 15, 15, 15, 2, 2, 15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  15,
+  2,
+  8,
+  2,
+  2,
+  8,
+  8,
+  15,
+  2,
+  8,
+  2,
+  2,
+  8,
+  8,
+  2,
+  2,
+  15,
+  15,
+  6,
+  8,
+  2,
+  8,
+  15,
+  15,
+  2,
+  8,
+  2,
+  2,
+  2,
+  15,
+  15,
+  6,
+  6,
+  2,
+  6,
+  8,
+  15,
+  15,
+  2,
+  2,
+  15,
+  15,
+  15,
+  15,
+  15,
+  2,
+  2,
+  15,
 ];
 
 /// Standard 2-subset partition table (64 entries x 16 texels).

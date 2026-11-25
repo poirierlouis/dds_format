@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+set -eu
+
+echo "Running pre-push checks..."
+
+echo "1/3 Checking formatting (dart format)..."
+if ! dart format --output=none --set-exit-if-changed .; then
+  echo "Error: Code is not formatted. Run 'dart format .' and commit the changes before pushing." >&2
+  exit 1
+fi
+
+echo "2/3 Running static analysis (dart analyze)..."
+if ! dart analyze --fatal-infos; then
+  echo "Error: Static analysis failed. Fix all issues before pushing." >&2
+  exit 1
+fi
+
+echo "3/3 Running tests (dart test)..."
+if ! dart test; then
+  echo "Error: Tests failed. Fix failing tests before pushing." >&2
+  exit 1
+fi
+
+echo "All pre-push checks passed."
