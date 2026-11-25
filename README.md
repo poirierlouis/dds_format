@@ -1,7 +1,7 @@
 # dds_format
 
-A synchronous, zero-dependency Dart library for reading DirectDraw Surface 
-(`.dds`) files from an in-memory `Uint8List` buffer.
+A Dart library for reading DirectDraw Surface (`.dds`) files from an in-memory
+`Uint8List` buffer.
 
 `dds_format` parses standard `DDS_HEADER`, `DDS_PIXELFORMAT`, and extended 
 `DDS_HEADER_DXT10` headers, builds a lazy surface index without copying pixel
