@@ -31,6 +31,13 @@ abstract final class PixelDecoder {
       case DdsTextureFormat.r8g8b8a8Unorm:
       case DdsTextureFormat.r8g8b8a8UnormSrgb:
         dst.setRange(0, dst.length, src);
+      case DdsTextureFormat.b8g8r8Unorm:
+        for (int i = 0, srcOff = 0; i < dst.length; i += 4, srcOff += 3) {
+          dst[i] = src[srcOff + 2];
+          dst[i + 1] = src[srcOff + 1];
+          dst[i + 2] = src[srcOff];
+          dst[i + 3] = 255;
+        }
       case DdsTextureFormat.b8g8r8a8Unorm:
         for (int i = 0; i < dst.length; i += 4) {
           dst[i] = src[i + 2];

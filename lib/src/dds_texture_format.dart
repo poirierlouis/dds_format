@@ -59,6 +59,12 @@ enum DdsTextureFormat {
     blockByteSize: 16,
     bytesPerPixel: 1.0,
   ),
+  b8g8r8Unorm(
+    dxgiCode: null,
+    isBlockCompressed: false,
+    blockByteSize: 3,
+    bytesPerPixel: 3.0,
+  ),
   b8g8r8a8Unorm(
     dxgiCode: 87,
     isBlockCompressed: false,
@@ -91,8 +97,8 @@ enum DdsTextureFormat {
     required this.bytesPerPixel,
   });
 
-  /// Numeric `DXGI_FORMAT` enum value.
-  final int dxgiCode;
+  /// Numeric `DXGI_FORMAT` enum value, or `null` for legacy-only formats.
+  final int? dxgiCode;
 
   /// True for 4x4 block-compressed BCn formats (`BC1`..`BC7`).
   final bool isBlockCompressed;
@@ -114,7 +120,7 @@ enum DdsTextureFormat {
   }
 
   static final Map<int, DdsTextureFormat> _byDxgiCode = {
-    for (final v in values) v.dxgiCode: v,
+    for (final v in values) ?v.dxgiCode: v,
   };
 
   @override

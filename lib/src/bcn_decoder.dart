@@ -45,6 +45,7 @@ final class BcnDecoder {
       case DdsTextureFormat.r8g8b8a8UnormSrgb:
       case DdsTextureFormat.r8Unorm:
       case DdsTextureFormat.a8Unorm:
+      case DdsTextureFormat.b8g8r8Unorm:
       case DdsTextureFormat.b8g8r8a8Unorm:
         throw ArgumentError.value(
           format,

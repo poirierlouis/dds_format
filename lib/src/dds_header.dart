@@ -373,6 +373,16 @@ final class DdsHeader {
       }
     }
 
+    if ((pfFlags & _ddpfRgb) != 0 &&
+        rgbBitCount == 24 &&
+        !hasAlphaPixels &&
+        rMask == 0x00ff0000 &&
+        gMask == 0x0000ff00 &&
+        bMask == 0x000000ff &&
+        aMask == 0x00000000) {
+      return DdsTextureFormat.b8g8r8Unorm;
+    }
+
     if ((pfFlags & _ddpfLuminance) != 0 &&
         rgbBitCount == 8 &&
         !hasAlphaPixels &&

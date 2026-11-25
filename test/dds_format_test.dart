@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dds_format/dds_format.dart';
@@ -66,7 +67,7 @@ Uint8List _buildDx10Dds({
   int depth = 1,
   int mipCount = 1,
   int arraySize = 1,
-  required int dxgiFormat,
+  required int? dxgiFormat,
   int resourceDimension = 3, // TEXTURE2D
   int miscFlag = 0,
   required Uint8List payload,
@@ -90,7 +91,7 @@ Uint8List _buildDx10Dds({
 
   view.setUint32(108, 0x1000, Endian.little);
 
-  view.setUint32(128, dxgiFormat, Endian.little);
+  view.setUint32(128, dxgiFormat!, Endian.little);
   view.setUint32(132, resourceDimension, Endian.little);
   view.setUint32(136, miscFlag, Endian.little);
   view.setUint32(140, arraySize, Endian.little);
@@ -122,11 +123,13 @@ void main() {
   group('Header variants', () {
     test('parses DX10 header for all supported DdsTextureFormat values', () {
       for (final format in DdsTextureFormat.values) {
+        final dxgiCode = format.dxgiCode;
+        if (dxgiCode == null) continue;
         final payloadLen = _totalSurfaceBytes(format, width: 4, height: 4);
         final dds = _buildDx10Dds(
           width: 4,
           height: 4,
-          dxgiFormat: format.dxgiCode,
+          dxgiFormat: dxgiCode,
           payload: Uint8List(payloadLen),
         );
         final reader = DdsReader(dds);
@@ -626,4 +629,126 @@ void main() {
       expect(() => reader.readRgba8(mipLevel: -1), throwsRangeError);
     });
   });
+
+  group('Example Dart logo files', () {
+    const logoSpecs = [
+      (name: 'icon_dart@2x', width: 1001, height: 1001),
+      (name: 'lockup_dart_horizontal@2x', width: 942, height: 301),
+      (name: 'lockup_dart_vertical@2x', width: 1001, height: 1467),
+    ];
+
+    for (final spec in logoSpecs) {
+      test('reads ${spec.name}.dds and decodes R8G8B8A8 matching PNG', () {
+        final ddsBytes = File('example/${spec.name}.dds').readAsBytesSync();
+        final pngBytes = File('example/${spec.name}.png').readAsBytesSync();
+
+        final reader = DdsReader(ddsBytes);
+        expect(reader.width, equals(spec.width));
+        expect(reader.height, equals(spec.height));
+        expect(reader.depth, equals(1));
+        expect(reader.mipCount, equals(1));
+        expect(reader.arraySize, equals(1));
+        expect(reader.faceCount, equals(1));
+        expect(reader.resourceType, equals(DdsResourceType.texture2D));
+        expect(reader.format, equals(DdsTextureFormat.b8g8r8Unorm));
+        expect(reader.hasDx10Header, isFalse);
+
+        final raw = reader.readRaw();
+        expect(raw.length, equals(spec.width * spec.height * 3));
+
+        final rgba = reader.readRgba8();
+        expect(rgba.length, equals(spec.width * spec.height * 4));
+
+        final png = _decodePngRgba8(pngBytes);
+        expect(png.width, equals(spec.width));
+        expect(png.height, equals(spec.height));
+
+        final pixelCount = spec.width * spec.height;
+        for (int i = 0; i < pixelCount; i++) {
+          final off = i * 4;
+          if (rgba[off] != png.rgba[off] ||
+              rgba[off + 1] != png.rgba[off + 1] ||
+              rgba[off + 2] != png.rgba[off + 2] ||
+              rgba[off + 3] != 255) {
+            fail(
+              'Pixel mismatch at index $i: '
+              'got (${rgba[off]}, ${rgba[off + 1]}, ${rgba[off + 2]}, ${rgba[off + 3]}), '
+              'expected (${png.rgba[off]}, ${png.rgba[off + 1]}, ${png.rgba[off + 2]}, 255)',
+            );
+          }
+        }
+      });
+    }
+  });
+}
+
+({int width, int height, Uint8List rgba}) _decodePngRgba8(Uint8List png) {
+  final bd = ByteData.sublistView(png);
+  int offset = 8; // PNG signature
+  int width = 0;
+  int height = 0;
+  final idat = BytesBuilder(copy: false);
+
+  while (offset + 12 <= png.length) {
+    final len = bd.getUint32(offset);
+    final type = String.fromCharCodes(png, offset + 4, offset + 8);
+    final dataStart = offset + 8;
+    final dataEnd = dataStart + len;
+    if (type == 'IHDR') {
+      width = bd.getUint32(dataStart);
+      height = bd.getUint32(dataStart + 4);
+      final bitDepth = png[dataStart + 8];
+      final colorType = png[dataStart + 9];
+      if (bitDepth != 8 || colorType != 6) {
+        throw StateError(
+          'Unsupported PNG format: bitDepth=$bitDepth, colorType=$colorType',
+        );
+      }
+    } else if (type == 'IDAT') {
+      idat.add(Uint8List.sublistView(png, dataStart, dataEnd));
+    } else if (type == 'IEND') {
+      break;
+    }
+    offset = dataEnd + 4; // CRC
+  }
+
+  final raw = zlib.decode(idat.takeBytes());
+  const bpp = 4;
+  final stride = width * bpp;
+  final out = Uint8List(height * stride);
+
+  int paeth(int a, int b, int c) {
+    final p = a + b - c;
+    final pa = (p - a).abs();
+    final pb = (p - b).abs();
+    final pc = (p - c).abs();
+    if (pa <= pb && pa <= pc) return a;
+    if (pb <= pc) return b;
+    return c;
+  }
+
+  for (int y = 0; y < height; y++) {
+    final inRow = y * (stride + 1);
+    final filter = raw[inRow];
+    final outRow = y * stride;
+    final prevRow = (y - 1) * stride;
+
+    for (int x = 0; x < stride; x++) {
+      final rawByte = raw[inRow + 1 + x];
+      final a = x >= bpp ? out[outRow + x - bpp] : 0;
+      final b = y > 0 ? out[prevRow + x] : 0;
+      final c = (y > 0 && x >= bpp) ? out[prevRow + x - bpp] : 0;
+      final val = switch (filter) {
+        0 => rawByte,
+        1 => (rawByte + a) & 0xff,
+        2 => (rawByte + b) & 0xff,
+        3 => (rawByte + ((a + b) >> 1)) & 0xff,
+        4 => (rawByte + paeth(a, b, c)) & 0xff,
+        _ => throw StateError('Unsupported PNG filter $filter'),
+      };
+      out[outRow + x] = val;
+    }
+  }
+
+  return (width: width, height: height, rgba: out);
 }
